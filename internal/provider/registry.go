@@ -35,18 +35,20 @@ import (
 
 // ModelInfo describes a single LLM model's capabilities and constraints.
 type ModelInfo struct {
-	ID                  string   `json:"id"`
-	Name                string   `json:"name,omitempty"`
-	ContextWindow       int      `json:"context_window"`
-	DefaultMaxOut       int      `json:"default_max_tokens"`
-	CanReason           bool     `json:"can_reason,omitempty"`
-	SupportsImages      bool     `json:"supports_images,omitempty"`
-	SupportsVideo       bool     `json:"supports_video,omitempty"`
-	ThinkingModes       []string `json:"thinking_modes,omitempty"`
-	CostPer1MIn         float64  `json:"cost_per_1m_in,omitempty"`
-	CostPer1MOut        float64  `json:"cost_per_1m_out,omitempty"`
-	CostPer1MCacheRead  float64  `json:"cost_per_1m_cache_read,omitempty"`
-	CostPer1MCacheWrite float64  `json:"cost_per_1m_cache_write,omitempty"`
+	ID                     string   `json:"id"`
+	Name                   string   `json:"name,omitempty"`
+	ContextWindow          int      `json:"context_window"`
+	DefaultMaxOut          int      `json:"default_max_tokens"`
+	CanReason              bool     `json:"can_reason,omitempty"`
+	SupportsImages         bool     `json:"supports_images,omitempty"`
+	SupportsVideo          bool     `json:"supports_video,omitempty"`
+	ThinkingModes          []string `json:"thinking_modes,omitempty"`
+	ReasoningEfforts       []string `json:"reasoning_efforts,omitempty"`
+	DefaultReasoningEffort string   `json:"default_reasoning_effort,omitempty"`
+	CostPer1MIn            float64  `json:"cost_per_1m_in,omitempty"`
+	CostPer1MOut           float64  `json:"cost_per_1m_out,omitempty"`
+	CostPer1MCacheRead     float64  `json:"cost_per_1m_cache_read,omitempty"`
+	CostPer1MCacheWrite    float64  `json:"cost_per_1m_cache_write,omitempty"`
 }
 
 // ProviderEndpoint describes protocol endpoints for one provider region.
@@ -304,18 +306,20 @@ type catwalkProvider struct {
 }
 
 type catwalkModel struct {
-	ID                  string   `json:"id"`
-	Name                string   `json:"name"`
-	ContextWindow       int      `json:"context_window"`
-	DefaultMaxTokens    int      `json:"default_max_tokens"`
-	CanReason           bool     `json:"can_reason"`
-	SupportsImages      bool     `json:"supports_images"`
-	SupportsVideo       bool     `json:"supports_video"`
-	ThinkingModes       []string `json:"thinking_modes"`
-	CostPer1MIn         float64  `json:"cost_per_1m_in"`
-	CostPer1MOut        float64  `json:"cost_per_1m_out"`
-	CostPer1MCacheRead  float64  `json:"cost_per_1m_cache_read"`
-	CostPer1MCacheWrite float64  `json:"cost_per_1m_cache_write"`
+	ID                     string   `json:"id"`
+	Name                   string   `json:"name"`
+	ContextWindow          int      `json:"context_window"`
+	DefaultMaxTokens       int      `json:"default_max_tokens"`
+	CanReason              bool     `json:"can_reason"`
+	SupportsImages         bool     `json:"supports_images"`
+	SupportsVideo          bool     `json:"supports_video"`
+	ThinkingModes          []string `json:"thinking_modes"`
+	ReasoningEfforts       []string `json:"reasoning_efforts"`
+	DefaultReasoningEffort string   `json:"default_reasoning_effort"`
+	CostPer1MIn            float64  `json:"cost_per_1m_in"`
+	CostPer1MOut           float64  `json:"cost_per_1m_out"`
+	CostPer1MCacheRead     float64  `json:"cost_per_1m_cache_read"`
+	CostPer1MCacheWrite    float64  `json:"cost_per_1m_cache_write"`
 }
 
 func convertCatwalkResponse(raw []catwalkProvider) []ProviderInfo {
@@ -328,18 +332,20 @@ func convertCatwalkResponse(raw []catwalkProvider) []ProviderInfo {
 		}
 		for _, rm := range rp.Models {
 			p.Models = append(p.Models, ModelInfo{
-				ID:                  rm.ID,
-				Name:                rm.Name,
-				ContextWindow:       rm.ContextWindow,
-				DefaultMaxOut:       rm.DefaultMaxTokens,
-				CanReason:           rm.CanReason,
-				SupportsImages:      rm.SupportsImages,
-				SupportsVideo:       rm.SupportsVideo,
-				ThinkingModes:       rm.ThinkingModes,
-				CostPer1MIn:         rm.CostPer1MIn,
-				CostPer1MOut:        rm.CostPer1MOut,
-				CostPer1MCacheRead:  rm.CostPer1MCacheRead,
-				CostPer1MCacheWrite: rm.CostPer1MCacheWrite,
+				ID:                     rm.ID,
+				Name:                   rm.Name,
+				ContextWindow:          rm.ContextWindow,
+				DefaultMaxOut:          rm.DefaultMaxTokens,
+				CanReason:              rm.CanReason,
+				SupportsImages:         rm.SupportsImages,
+				SupportsVideo:          rm.SupportsVideo,
+				ThinkingModes:          rm.ThinkingModes,
+				ReasoningEfforts:       rm.ReasoningEfforts,
+				DefaultReasoningEffort: rm.DefaultReasoningEffort,
+				CostPer1MIn:            rm.CostPer1MIn,
+				CostPer1MOut:           rm.CostPer1MOut,
+				CostPer1MCacheRead:     rm.CostPer1MCacheRead,
+				CostPer1MCacheWrite:    rm.CostPer1MCacheWrite,
 			})
 		}
 		providers = append(providers, p)
@@ -479,16 +485,30 @@ func EmbeddedProviders() []ProviderInfo {
 					Region:           "global_en",
 					OpenAIBaseURL:    "https://api.minimax.io/v1",
 					AnthropicBaseURL: "https://api.minimax.io/anthropic",
-					DocsURL:          "https://platform.minimax.io/docs/api-reference/api-overview",
+					DocsURL:          "https://platform.minimax.io/docs",
 				},
 				{
 					Region:           "cn_zh",
 					OpenAIBaseURL:    "https://api.minimaxi.com/v1",
 					AnthropicBaseURL: "https://api.minimaxi.com/anthropic",
-					DocsURL:          "https://platform.minimaxi.com/docs/api-reference/api-overview",
+					DocsURL:          "https://platform.minimaxi.com/docs",
 				},
 			},
 			Models: []ModelInfo{
+				{
+					ID:                     "MiniMax-M3.1-Flash",
+					Name:                   "MiniMax M3.1 Flash",
+					ContextWindow:          1_000_000,
+					CanReason:              true,
+					SupportsImages:         true,
+					SupportsVideo:          true,
+					ThinkingModes:          []string{"adaptive"},
+					ReasoningEfforts:       []string{"low", "medium", "high", "xhigh", "max"},
+					DefaultReasoningEffort: "max",
+					CostPer1MIn:            0.15,
+					CostPer1MOut:           0.6,
+					CostPer1MCacheRead:     0.015,
+				},
 				{
 					ID:                 "MiniMax-M3",
 					Name:               "MiniMax M3",
@@ -497,20 +517,9 @@ func EmbeddedProviders() []ProviderInfo {
 					SupportsImages:     true,
 					SupportsVideo:      true,
 					ThinkingModes:      []string{"adaptive", "disabled"},
-					CostPer1MIn:        0.6,
-					CostPer1MOut:       2.4,
-					CostPer1MCacheRead: 0.12,
-				},
-				{
-					ID:                  "MiniMax-M2.7",
-					Name:                "MiniMax M2.7",
-					ContextWindow:       204_800,
-					CanReason:           true,
-					ThinkingModes:       []string{"always_on"},
-					CostPer1MIn:         0.3,
-					CostPer1MOut:        1.2,
-					CostPer1MCacheRead:  0.06,
-					CostPer1MCacheWrite: 0.375,
+					CostPer1MIn:        0.3,
+					CostPer1MOut:       1.2,
+					CostPer1MCacheRead: 0.06,
 				},
 			},
 		},
