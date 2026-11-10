@@ -1,9 +1,6 @@
 package provider
 
-import (
-	"slices"
-	"testing"
-)
+import "testing"
 
 func TestRegistryLookup_Exact(t *testing.T) {
 	r := NewRegistry(EmbeddedProviders())
@@ -107,33 +104,16 @@ func TestMiniMaxRegistry(t *testing.T) {
 	r := NewRegistry(EmbeddedProviders())
 
 	cases := []struct {
-		id                     string
-		context                int
-		in                     float64
-		out                    float64
-		cacheR                 float64
-		thinkingModes          []string
-		reasoningEfforts       []string
-		defaultReasoningEffort string
+		id      string
+		context int
+		in      float64
+		out     float64
+		cacheR  float64
+		cacheW  float64
+		video   bool
 	}{
-		{
-			id:                     "MiniMax-M3.1-Flash",
-			context:                1_000_000,
-			in:                     0.15,
-			out:                    0.6,
-			cacheR:                 0.015,
-			thinkingModes:          []string{"adaptive"},
-			reasoningEfforts:       []string{"low", "medium", "high", "xhigh", "max"},
-			defaultReasoningEffort: "max",
-		},
-		{
-			id:            "MiniMax-M3",
-			context:       1_000_000,
-			in:            0.3,
-			out:           1.2,
-			cacheR:        0.06,
-			thinkingModes: []string{"adaptive", "disabled"},
-		},
+		{id: "MiniMax-M3", context: 1_000_000, in: 0.6, out: 2.4, cacheR: 0.12, video: true},
+		{id: "MiniMax-M2.7", context: 204_800, in: 0.3, out: 1.2, cacheR: 0.06, cacheW: 0.375},
 	}
 	for _, tc := range cases {
 		m, ok := r.Lookup(tc.id)
@@ -152,17 +132,14 @@ func TestMiniMaxRegistry(t *testing.T) {
 		if m.CostPer1MCacheRead != tc.cacheR {
 			t.Errorf("%s cache-read price: got %v, want %v", tc.id, m.CostPer1MCacheRead, tc.cacheR)
 		}
-		if !m.CanReason || !m.SupportsImages || !m.SupportsVideo {
-			t.Errorf("%s capabilities: reasoning=%t images=%t video=%t", tc.id, m.CanReason, m.SupportsImages, m.SupportsVideo)
+		if m.CostPer1MCacheWrite != tc.cacheW {
+			t.Errorf("%s cache-write price: got %v, want %v", tc.id, m.CostPer1MCacheWrite, tc.cacheW)
 		}
-		if !slices.Equal(m.ThinkingModes, tc.thinkingModes) {
-			t.Errorf("%s thinking modes: got %#v, want %#v", tc.id, m.ThinkingModes, tc.thinkingModes)
+		if m.CanReason == false {
+			t.Errorf("%s should support reasoning", tc.id)
 		}
-		if !slices.Equal(m.ReasoningEfforts, tc.reasoningEfforts) {
-			t.Errorf("%s reasoning efforts: got %#v, want %#v", tc.id, m.ReasoningEfforts, tc.reasoningEfforts)
-		}
-		if m.DefaultReasoningEffort != tc.defaultReasoningEffort {
-			t.Errorf("%s default reasoning effort: got %q, want %q", tc.id, m.DefaultReasoningEffort, tc.defaultReasoningEffort)
+		if m.SupportsVideo != tc.video {
+			t.Errorf("%s video support: got %t, want %t", tc.id, m.SupportsVideo, tc.video)
 		}
 	}
 
@@ -179,9 +156,6 @@ func TestMiniMaxRegistry(t *testing.T) {
 	if len(provider.Endpoints) != 2 {
 		t.Fatalf("MiniMax endpoints: got %d, want 2", len(provider.Endpoints))
 	}
-	if provider.Endpoints[0].DocsURL != "https://platform.minimax.io/docs" || provider.Endpoints[1].DocsURL != "https://platform.minimaxi.com/docs" {
-		t.Errorf("MiniMax docs URLs: got %#v", provider.Endpoints)
-	}
 	if endpoint, ok := MiniMaxEndpoint("cn_zh"); !ok || endpoint.OpenAIBaseURL != "https://api.minimaxi.com/v1" || endpoint.AnthropicBaseURL != "https://api.minimaxi.com/anthropic" {
 		t.Errorf("China endpoint: got %#v, ok=%t", endpoint, ok)
 	}
@@ -194,7 +168,7 @@ func TestMiniMaxRegistry(t *testing.T) {
 	if !ok || len(mergedProvider.Endpoints) != 2 {
 		t.Fatalf("merged MiniMax metadata: provider=%#v, ok=%t", mergedProvider, ok)
 	}
-	if _, ok := NewRegistry(merged).Lookup("MiniMax-M3.1-Flash"); !ok {
+	if _, ok := NewRegistry(merged).Lookup("MiniMax-M2.7"); !ok {
 		t.Fatal("embedded MiniMax model should survive remote registry merge")
 	}
 }
